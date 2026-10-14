@@ -1,0 +1,113 @@
+# GitLab CI/CD pipeline template for automation-playwright-framework
+# Update IMAGE_TAG to match the @playwright/test version in package.json.
+
+image: mcr.microsoft.com/playwright:v1.64.0-noble
+
+variables:
+  ENV: dev
+  BROWSER_PROJECT: chromium
+  GREP_TAG: ""
+
+stages:
+  - verify
+  - test
+
+# ------------------------------------------------------------------
+# Always runs: typecheck, generate, offline unit tests — no tenant
+# ------------------------------------------------------------------
+framework-check:
+  stage: verify
+  script:
+    - npm ci
+    - npm run check
+    - npm run test:framework
+    - npm run test:helpers
+  artifacts:
+    when: always
+    paths:
+      - reports/framework-results/
+    expire_in: 14 days
+
+# ------------------------------------------------------------------
+# Reachability check — no credentials required
+# ------------------------------------------------------------------
+api-smoke:
+  stage: test
+  only:
+    - main
+  script:
+    - npm ci
+    - npx playwright install --with-deps chromium
+    # Set DEV_BASE_URL or the appropriate environment variable before running.
+    - npx playwright test --config=playwright.config.ts --project=api
+  artifacts:
+    when: always
+    paths:
+      - reports/
+    expire_in: 14 days
+
+# ------------------------------------------------------------------
+# Smoke test — @smoke scenarios on DEV, auto on push to main
+# ------------------------------------------------------------------
+smoke-test:
+  stage: test
+  only:
+    - main
+  script:
+    # Retrieve secrets from AWS Secrets Manager (update secret name).
+    # - node scripts/ci-secret.cjs
+    - npm ci
+    - npx playwright install --with-deps $BROWSER_PROJECT
+    - npm run test:smoke -- --project=$BROWSER_PROJECT
+  artifacts:
+    reports:
+      junit: reports/junit/results.xml
+    paths:
+      - reports/
+    expire_in: 14 days
+    when: always
+
+# ------------------------------------------------------------------
+# Full regression — manual trigger on main
+# ------------------------------------------------------------------
+regression:
+  stage: test
+  when: manual
+  only:
+    - main
+  script:
+    # - node scripts/ci-secret.cjs
+    - npm ci
+    - npx playwright install --with-deps $BROWSER_PROJECT
+    - npm test -- --project=$BROWSER_PROJECT
+  artifacts:
+    reports:
+      junit: reports/junit/results.xml
+    paths:
+      - reports/
+    expire_in: 14 days
+    when: always
+
+# ------------------------------------------------------------------
+# On-demand run — configurable tag and browser
+# ------------------------------------------------------------------
+on-demand:
+  stage: test
+  when: manual
+  script:
+    # - node scripts/ci-secret.cjs
+    - npm ci
+    - npx playwright install --with-deps $BROWSER_PROJECT
+    - >
+      if [ -n "$GREP_TAG" ]; then
+        npm run generate && npx playwright test --project=$BROWSER_PROJECT --grep "$GREP_TAG"
+      else
+        npm test -- --project=$BROWSER_PROJECT
+      fi
+  artifacts:
+    reports:
+      junit: reports/junit/results.xml
+    paths:
+      - reports/
+    expire_in: 14 days
+    when: always

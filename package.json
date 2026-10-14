@@ -1,0 +1,35 @@
+{
+  "name": "automation-playwright-framework",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "generate":             "bddgen",
+    "pretest":              "bddgen",
+    "test":                 "playwright test",
+    "test:smoke":           "bddgen && playwright test --grep @smoke",
+    "test:chromium":        "bddgen && playwright test --project=chromium",
+    "test:firefox":         "bddgen && playwright test --project=firefox",
+    "test:webkit":          "bddgen && playwright test --project=webkit",
+    "report":               "playwright show-report reports/html",
+    "typecheck":            "tsc --noEmit",
+    "check":                "npm run typecheck && npm run generate && playwright test --list",
+    "preflight":            "node scripts/preflight.cjs",
+    "test:framework":       "node --test tests/framework/*.test.cjs",
+    "agents:init":          "node scripts/init-agents.cjs",
+    "test:helpers":         "playwright test --config=playwright.framework.config.ts",
+    "agents:init:codex":    "node scripts/init-agents.cjs codex",
+    "agents:init:claude":   "node scripts/init-agents.cjs claude",
+    "agents:check":         "node scripts/agent-readiness.cjs",
+    "agents:check:live":    "node scripts/agent-readiness.cjs --live"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@playwright/cli": "0.1.22",
+    "@playwright/test": "1.64.0",
+    "@types/node": "^22.0.0",
+    "playwright-bdd": "^9.2.1",
+    "typescript": "^5.6.0"
+  }
+}

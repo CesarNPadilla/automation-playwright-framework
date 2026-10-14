@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Playwright
+.features-gen/
+test-results/
+playwright-report/
+.playwright-mcp/
+
+# Test reports
+reports/
+
+# Auth & secrets
+auth/storageState.json
+auth/scenario-state.json
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.idea/
+.vscode/
+*.swp
